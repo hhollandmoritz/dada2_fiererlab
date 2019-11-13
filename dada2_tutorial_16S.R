@@ -368,7 +368,9 @@ head(filt_out)
 filt_out %>% 
   data.frame() %>% 
   mutate(Samples = rownames(.),
-         percent_kept = 100*(reads.out/reads.in)) %>%
+         percent_kept = ifelse(reads.out == 0, 0,
+                               100*(reads.out/reads.in))) %>%
+  arrange(reads.out) %>%
   select(Samples, everything()) %>%
   summarise(min_remaining = paste0(round(min(percent_kept), 2), "%"), 
             median_remaining = paste0(round(median(percent_kept), 2), "%"),
@@ -685,13 +687,15 @@ map_fp = 'mypath/my_mapfile.txt'
 input = load_taxa_table(tax_table_fp, map_fp)
 
 #' ### Post-pipeline considerations
-#' After following this pipline, you will need to think about the following in downstream applications (example with 'mctoolsr' R package below):
+#' After following this pipline, you will need to think about the following in downstream applications (example with ['mctoolsr'](https://github.com/leffj/mctoolsr) R package below):
 #' 
 #' 1. Remove mitochondrial and chloroplast sequences
 #' 2. Remove reads assigned as eukaryotes
 #' 3. Remove reads that are unassigned at domain level
 
 #+ downstream options 2, eval = FALSE, include=TRUE
+library(mctoolsr)
+
 input_filt <- filter_taxa_from_input(input, taxa_to_remove = c("Chloroplast","Mitochondria", "Eukaryota"))
 input_filt <- filter_taxa_from_input(input_filt, at_spec_level = 2, taxa_to_remove = "NA")
 
